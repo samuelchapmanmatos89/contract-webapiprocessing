@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getcontracts" doc:id="e35f1c0b-0b7a-4d50-856e-85fa62f1b701" >
+		<http:listener doc:name="GET/getcontracts" doc:id="2a2045b1-d129-4edd-a9fd-a93359c58da6" config-ref="HTTP_Listener_config" path="/getcontracts" allowedMethods="GET"/>
+		<salesforce:query doc:name="Query GET ALL Contracts" doc:id="d9f95f83-896f-4ef1-87c6-08bd444aa3f6" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[SELECT FIELDS(ALL) FROM contract LIMIT 200]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform List&lt;Contracts&gt; To JSON" doc:id="ef331d3b-7516-41be-ae06-a081f8169ae9">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="67b8a41e-2163-4b67-b49c-52fdd409576c" />
+	</flow>
+	<flow name="viewOnModifiedRecordConsole" doc:id="780dcfab-841b-4143-8f86-a16219e87994" >
+		<salesforce:modified-object-listener objectType="Contract" doc:name="On Modified Object" doc:id="fb79cfc3-2979-4897-9393-10b72e2a1512" config-ref="Salesforce_Config">
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</salesforce:modified-object-listener>
+		<ee:transform doc:name="Transform Message" doc:id="522191f3-9b6a-469b-be81-63bef078501a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="13fd4fea-3058-4ade-87ce-f79ed299876a" />
+	</flow>
+	<flow name="getcontractsParameters" doc:id="b7e974ba-9625-4633-bff7-99ae494a9be0" >
+		<http:listener doc:name="GET/getcontractsparameters" doc:id="11884580-4010-4f3a-b4d7-0cf9895091dc" config-ref="HTTP_Listener_config" path="/getcontractsparameters" allowedMethods="GET" />
+		<ee:transform doc:name="Transform Request To List&lt;Contract&gt;" doc:id="e3c4ee00-86e3-4243-b86e-e7bd6b9c6c80" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+
+// Define variables to handle query parameters
+var id = if (attributes.queryParams.Id != null) attributes.queryParams.Id as String else ""
+var name = if (attributes.queryParams.Name != null) attributes.queryParams.Name as String else ""
+var fromDate = if (attributes.queryParams.FromDate != null) attributes.queryParams.FromDate as String else ""
+var toDate = if (attributes.queryParams.ToDate != null) attributes.queryParams.ToDate as String else ""
+
+// Construct the SQL query based on the presence of parameters
+var query = "SELECT Id,AccountId,Pricebook2Id,OwnerExpirationNotice,StartDate,EndDate,BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry,BillingLatitude,BillingLongitude,BillingGeocodeAccuracy,BillingAddress,BillingAddress.city,BillingAddress.country,BillingAddress.geocodeAccuracy,BillingAddress.latitude,BillingAddress.longitude,BillingAddress.postalCode,BillingAddress.state,BillingAddress.street,ContractTerm,OwnerId,Status,CompanySignedId,CompanySignedDate,CustomerSignedId,CustomerSignedTitle,CustomerSignedDate,SpecialTerms,ActivatedById,ActivatedDate,StatusCode,Description,IsDeleted,ContractNumber,LastApprovedDate,CreatedDate,CreatedById,LastModifiedDate,LastModifiedById,SystemModstamp,LastActivityDate,LastViewedDate,LastReferencedDate
+ FROM Contract "
+ 	
+ 	++ (if (id != "" or name != "" or fromDate != "" or toDate !="") " WHERE " else "")
+    ++ (if (id != "") " Id = '" ++ id ++ "'" else "")
+    ++ (if (id != "" and (name != "" or (fromDate != "" and toDate !=""))) " OR " else "")
+    ++ (if (name != "") " Name LIKE '%" ++ name ++ "%'" else "")
+    ++ (if((name != "") and (fromDate != "" and toDate != "")) " OR " else "")       
+    ++ (if (fromDate != "" and toDate != "") " (CreatedDate >= "++ fromDate ++ " AND CreatedDate <= " ++ toDate ++ ")"  else "")
+    
+    ++ " LIMIT 200"
+
+---
+query
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:query doc:name="Query GET ALL Contracts For Parameters" doc:id="2ffc76bb-4c7d-4f57-bcc2-3091806b2798" config-ref="Salesforce_Config" >
+			<salesforce:salesforce-query ><![CDATA[SELECT FIELDS(ALL) FROM contract LIMIT 200]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform List&lt;Contracts&gt; To JSON" doc:id="8e0c0386-0cb4-4e97-bf53-d5fc46d578e2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="a7300a0a-cacc-4849-a7ee-5375999ed76d" />
+	</flow>
+	<flow name="postcreatedcontracts" doc:id="ba42e462-e09d-4d3e-adca-056c41bc0a50" >
+		<http:listener doc:name="POST/postcreatedcontracts" doc:id="4a186274-d8f0-4fd6-9bee-0f590e6a4128" config-ref="HTTP_Listener_config" path="/postcreatedcontracts" allowedMethods="POST" />
+		<ee:transform doc:name="Transform Request To List&lt;Contract&gt;" doc:id="09581ff4-9eb3-4ed4-9e87-dfc75ebe10b8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map (payload01) -> {
+		CustomerSignedDate: payload01.CustomerSignedDate,
+        ActivatedById: payload01.ActivatedById,
+        //LastModifiedDate: payload01.LastModifiedDate,
+        ContractNumber: payload01.ContractNumber,
+        AccountId: payload01.AccountId,
+        Description: payload01.Description,
+        BillingCity: payload01.BillingCity,
+        CustomerSignedId: payload01.CustomerSignedId,
+        //LastReferencedDate: payload01.LastReferencedDate,
+        BillingLatitude: payload01.BillingLatitude,
+        ContractTerm: payload01.ContractTerm,
+        //`type`: payload01.`Contract`,
+        CompanySignedId: payload01.CompanySignedId,
+        StatusCode: payload01.StatusCode,
+        //StartDate: payload01.StartDate,        
+        OwnerId: payload01.OwnerId,
+        CreatedById: payload01.CreatedById,
+        BillingLongitude: payload01.BillingLongitude,
+        BillingGeocodeAccuracy: payload01.BillingGeocodeAccuracy,
+        BillingPostalCode: payload01.BillingPostalCode,
+        CustomerSignedTitle: payload01.CustomerSignedTitle,
+        ActivatedDate: payload01.ActivatedDate,
+        Status: payload01.Status,
+        IsDeleted: payload01.IsDeleted,
+        SpecialTerms: payload01.SpecialTerms,
+        //LastViewedDate: payload01.LastViewedDate,
+        LastApprovedDate: payload01.LastApprovedDate,
+        EndDate: payload01.EndDate,
+        //SystemModstamp: payload01.SystemModstamp,
+        BillingCountry: payload01.BillingCountry,
+        BillingStreet: payload01.BillingStreet,
+        //CreatedDate: payload01.CreatedDate,
+        //LastActivityDate: payload01.LastActivityDate,
+        Pricebook2Id: payload01.Pricebook2Id,
+        CompanySignedDate: payload01.CompanySignedDate,
+        OwnerExpirationNotice: payload01.OwnerExpirationNotice,
+        Id: payload01.Id,
+        LastModifiedById: payload01.LastModifiedById,
+        BillingState: payload01.BillingState,        
+        //BillingAddress: {
+        // 	country: payload01.BillingAddress.country,
+         //   city: payload01.BillingAddress.city,
+        //    countryCode: payload01.BillingAddress.countryCode,
+        //    street: payload01.BillingAddress.street,
+        //    latitude: payload01.BillingAddress.latitude,
+         //   postalCode: payload01.BillingAddress.postalCode,
+         //   geocodeAccuracy: payload01.BillingAddress.geocodeAccuracy,
+         //   stateCode: payload01.BillingAddress.stateCode,
+         //   state: payload01.BillingAddress.state,
+         //   longitude: payload01.BillingAddress.longitude
+       //}
+            
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create List&lt;Contract&gt; " doc:id="63690528-d6c3-4add-85b4-bb4df8515723" config-ref="Salesforce_Config" type="Contract"/>
+		<ee:transform doc:name="Transform List&lt;Contracts&gt; To JSON" doc:id="6562d5a8-1624-41f8-82f4-e9bb62794219" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="051acb61-71fc-4e15-a2f9-06fb1177cbfa" />
+	</flow>
+	<flow name="putupdatecontracts" doc:id="920a29bc-c5d9-49b4-9e52-9859bd3d4e19" >
+		<http:listener doc:name="PUT/putupdatecontracts" doc:id="bb31649c-95d2-40e8-83c8-a9ebcac0245d" config-ref="HTTP_Listener_config" path="/putupdatecontracts" allowedMethods="PUT" />
+		<ee:transform doc:name="Transform Request To List&lt;Contract&gt;" doc:id="af351dd4-0702-4071-9593-a91ada9c9ff6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map (payload01) -> {
+		//CustomerSignedDate: payload01.CustomerSignedDate,
+        ActivatedById: payload01.ActivatedById,
+        //LastModifiedDate: payload01.LastModifiedDate,
+        ContractNumber: payload01.ContractNumber,
+        AccountId: payload01.AccountId,
+        Description: payload01.Description,
+        //BillingCity: payload01.BillingCity,
+        CustomerSignedId: payload01.CustomerSignedId,
+        //LastReferencedDate: payload01.LastReferencedDate,
+        BillingLatitude: payload01.BillingLatitude,
+        ContractTerm: payload01.ContractTerm,
+        //`type`: payload01.`Contract`,
+        CompanySignedId: payload01.CompanySignedId,
+        StatusCode: payload01.StatusCode,
+        //StartDate: payload01.StartDate,        
+        OwnerId: payload01.OwnerId,
+        CreatedById: payload01.CreatedById,
+        BillingLongitude: payload01.BillingLongitude,
+        BillingGeocodeAccuracy: payload01.BillingGeocodeAccuracy,
+        BillingPostalCode: payload01.BillingPostalCode,
+        CustomerSignedTitle: payload01.CustomerSignedTitle,
+        ActivatedDate: payload01.ActivatedDate,
+        Status: payload01.Status,
+        IsDeleted: payload01.IsDeleted,
+        SpecialTerms: payload01.SpecialTerms,
+        //LastViewedDate: payload01.LastViewedDate,
+        LastApprovedDate: payload01.LastApprovedDate,
+        EndDate: payload01.EndDate,
+        //SystemModstamp: payload01.SystemModstamp,
+        BillingCountry: payload01.BillingCountry,
+        BillingStreet: payload01.BillingStreet,
+        //CreatedDate: payload01.CreatedDate,
+        //LastActivityDate: payload01.LastActivityDate,
+        Pricebook2Id: payload01.Pricebook2Id,
+        CompanySignedDate: payload01.CompanySignedDate,
+        OwnerExpirationNotice: payload01.OwnerExpirationNotice,
+        Id: payload01.Id,
+        LastModifiedById: payload01.LastModifiedById,
+        BillingState: payload01.BillingState,        
+        //BillingAddress: {
+        // 	country: payload01.BillingAddress.country,
+         //   city: payload01.BillingAddress.city,
+        //    countryCode: payload01.BillingAddress.countryCode,
+        //    street: payload01.BillingAddress.street,
+        //    latitude: payload01.BillingAddress.latitude,
+         //   postalCode: payload01.BillingAddress.postalCode,
+         //   geocodeAccuracy: payload01.BillingAddress.geocodeAccuracy,
+         //   stateCode: payload01.BillingAddress.stateCode,
+         //   state: payload01.BillingAddress.state,
+         //   longitude: payload01.BillingAddress.longitude
+       //}
+            
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:update doc:name="Update List&lt;Contract&gt; " doc:id="d08870dd-e1f8-40b0-aa44-77c68ea73597" config-ref="Salesforce_Config" type="Contract"/>
+		<ee:transform doc:name="Transform List&lt;Contracts&gt; To JSON" doc:id="81b7e6c0-eaa9-404d-89ae-4602f28a2639" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="9a98854b-2d8c-4050-949c-fecd1e153420" />
+	</flow>
+</mule>

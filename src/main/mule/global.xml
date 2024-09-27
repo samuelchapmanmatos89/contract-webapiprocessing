@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d4204143-5410-4f08-b10a-c1e4e6d8e3df" >
+		<http:listener-connection host="${http.host}" port="${http.port}" readTimeout="${http.timeout}"/>
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="c16e73e5-9b92-4dbf-a2a5-ee721cbf2a63" file="config.yaml" />
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="2c2a46e0-3abb-42e6-bfcb-b52163d56dfe" >
+		<salesforce:basic-connection username="${sfdc.username}" password="${sfdc.password}" securityToken="${sfdc.token}"/>
+	</salesforce:sfdc-config>
+	<http:request-config name="account-customerwebapihttpsystemconfiguration" doc:name="HTTP Request configuration" doc:id="f59f1827-7af3-49e9-9bf2-028e99d21707" basePath="/getvalidateexistenceaccount" >
+		<http:request-connection host="	https://account-customerwebapihttpsystem-9c6e37.5sc6y6-1.usa-e2.cloudhub.io" />
+	</http:request-config>
+</mule>
