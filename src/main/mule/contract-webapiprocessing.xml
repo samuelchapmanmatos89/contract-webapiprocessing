@@ -6,6 +6,23 @@
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getvalidateexistencecontract" doc:id="b34f23f5-a013-4463-bd6b-7396ce2108d3" >
+		<http:listener doc:name="POST/getvalidateexistencecontract" doc:id="fd0031b9-a790-4ca4-8414-b10e9132168b" config-ref="HTTP_Listener_config" path="/getvalidateexistencecontract" allowedMethods="POST"/>
+		<set-variable value="#[payload]" doc:name="queryTextPlainForValidatingContract" doc:id="456c7bad-ee89-48fb-aef9-8fc3a7d96f22" variableName="queryTextPlainForValidatingContract"/>
+		<logger level="INFO" doc:name="Logger" doc:id="0be1d0fa-962e-43c4-92ea-57cb3bf7dda1" />
+		<salesforce:query doc:name="Validating Account Existence" doc:id="5aea9aac-3e85-422d-adec-bcc6c04e0d58" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[#[payload]]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Response To JSON" doc:id="76376f7a-ac3a-4822-b5ad-6aae9827a33c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="0d9a85a8-e29d-43cd-b54a-fca5e4889c1e" />
+	</flow>
 	<flow name="getcontracts" doc:id="e35f1c0b-0b7a-4d50-856e-85fa62f1b701" >
 		<http:listener doc:name="GET/getcontracts" doc:id="2a2045b1-d129-4edd-a9fd-a93359c58da6" config-ref="HTTP_Listener_config" path="/getcontracts" allowedMethods="GET"/>
 		<salesforce:query doc:name="Query GET ALL Contracts" doc:id="d9f95f83-896f-4ef1-87c6-08bd444aa3f6" config-ref="Salesforce_Config">
@@ -90,6 +107,7 @@ payload]]></ee:set-payload>
 output application/java
 ---
 payload map (payload01) -> {
+		external_Id__c: payload01.external_Id__c,
 		CustomerSignedDate: payload01.CustomerSignedDate,
         ActivatedById: payload01.ActivatedById,
         //LastModifiedDate: payload01.LastModifiedDate,

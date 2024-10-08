@@ -10,7 +10,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	</http:listener-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="c16e73e5-9b92-4dbf-a2a5-ee721cbf2a63" file="config.yaml" />
 	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="2c2a46e0-3abb-42e6-bfcb-b52163d56dfe" >
-		<salesforce:basic-connection username="${sfdc.username}" password="${sfdc.password}" securityToken="${sfdc.token}"/>
+		<salesforce:basic-connection username="${sfdc1.username}" password="${sfdc1.password}" securityToken="${sfdc1.token}"/>
 	</salesforce:sfdc-config>
 	<http:request-config name="account-customerwebapihttpsystemconfiguration" doc:name="HTTP Request configuration" doc:id="f59f1827-7af3-49e9-9bf2-028e99d21707" basePath="/getvalidateexistenceaccount" >
 		<http:request-connection host="	https://account-customerwebapihttpsystem-9c6e37.5sc6y6-1.usa-e2.cloudhub.io" />
